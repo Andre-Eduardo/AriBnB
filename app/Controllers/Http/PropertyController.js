@@ -20,11 +20,11 @@ class PropertyController {
   async index ({ request, response, view }) {
     const { latitude, longitude } = request.all()
 
-  const properties = Property.query()
-    .nearBy(latitude, longitude, 10)
-    .fetch()
-
-  return properties
+    const properties = Property.query().with('images')
+      .nearBy(latitude, longitude, 10)
+      .fetch()
+    
+    return properties
   }
 
   
@@ -38,19 +38,21 @@ class PropertyController {
    * @param {View} ctx.view
    */
   
-  async store ({ request, response }) {
+  async store ({auth, request, response }) {
     const { id } = auth.user
     const data = request.only([
-      'title',
-      'address',
-      'latitude',
-      'longitude',
-      'price'
+      "title",
+      "address",
+      "price",
+      "latitude",
+      "longitude"
+      
     ])
-  
-    const property = await Property.create({ ...data, user_id: id })
-  
+    
+    
+    const property = await Property.create({...data,user_id: id })
     return property
+    
   }
 
   /**
@@ -81,6 +83,21 @@ class PropertyController {
    */
   
   async update ({ params, request, response }) {
+    const property = await Property.findOrFail(params.id)
+
+  const data = request.only([
+    'title',
+    'address',
+    'latitude',
+    'longitude',
+    'price'
+  ])
+
+  property.merge(data)
+
+  await property.save()
+
+  return property
   }
 
   /**
